@@ -23,7 +23,7 @@
   //  }(document, 'script', 'facebook-jssdk'));
 </script>
 <style>
-	svg{
+	div{
 		background-color: #eee;margin: auto; display: block;
 	}
 </style>
@@ -33,12 +33,13 @@ UI = {};
 
 Class(UI, 'forces')({
 	prototype: {
-		html: 'svg',
+		html: null,
 		canvas: null,
 		width : 0,
 		height: 0,
 		radius: 0,
 		force: null,
+		popup: undefined,
 		force_system: {
 			linkDistance : 100,
 			charge : -1000
@@ -49,13 +50,18 @@ Class(UI, 'forces')({
 			this.height = h || 100;
 			this.radius = r || 10;
 
-			this.html = document.createElementNS("http://www.w3.org/2000/svg",this.html);
-			this.canvas = d3.select(this.html);
+			this.html = document.createElement('div');
+			var svg = document.createElementNS("http://www.w3.org/2000/svg",'svg');
+
+			this.html.appendChild(svg);
+
+			this.canvas = d3.select(svg);
 		},
 		start: function(dataset){
 			if(dataset !== undefined){
 				this.data = dataset;
 			}
+			var _this = this;
 			//console.log(this.force_system);
 			this.canvas.attr({'width': this.width, 'height': this.height});
 
@@ -81,9 +87,30 @@ Class(UI, 'forces')({
 										.append('circle')
 										.attr('r',this.radius)
 										.style('fill',"#F00")
-										.call(this.force.drag);
+										.call(this.force.drag)
+										.on('mouseover', function(d){
+											d3.select(this)
+													.transition()
+													.duration(200)
+													.attr('r',_this.radius*2);
+											
+											if(_this.popup !== undefined){
+												_this.popup.show();
+												_this.popup.text(d.name);
+												_this.popup.position([d.x-10,d.y-10]);
+											}
+										})
+										.on('mouseout', function(d){
+											d3.select(this)
+													.transition()
+													.duration(200)
+													.attr('r',_this.radius);
+											if(_this.popup !== undefined){
+												_this.popup.hide();
+											}
+										});
 
-			var _this = this;
+			
 			this.force.on('tick',function(){ _this.render()});
 		},
 		render: function(){
@@ -101,6 +128,30 @@ Class(UI, 'forces')({
 	}
 });
 
+Class(UI, 'popup')({
+	prototype: {
+		html : 'div',
+		object: null,
+		init: function(){
+			this.html = document.createElement(this.html);
+			this.object = d3.select(this.html).style('position','absolute');
+		},
+		position: function(pos){
+			this.object
+					.style('top', pos[1]+'px')
+					.style('left',pos[0]+'px');
+		},
+		text: function(new_txt){
+			this.html.innerText = new_txt;
+		},
+		show: function(){
+			this.object.style('display', 'block');
+		},
+		hide: function(){
+			this.object.style('display', 'none');
+		}
+	}
+});
 
 window.onload = function(){ 
 	chart = new UI.forces(window.innerWidth*0.9,window.innerHeight*0.9);
@@ -125,7 +176,15 @@ window.onload = function(){
 			{source: 1, target: 3}
 		]
 	});
-	document.getElementsByTagName('body')[0].appendChild(chart.html);
+
+	popup = new UI.popup();
+	popup.text('soy un popup');
+	popup.position([50,50]);
+	chart.popup = popup;
+
+	document.getElementsByTagName('body')[0]
+		.appendChild(chart.html)
+		.appendChild(popup.html);
 	//forcechart(window.innerWidth*0.9,window.innerHeight*0.9); 
 };
 
