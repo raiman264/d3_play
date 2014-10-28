@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>D3 start</title>
+</head>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<style>
+	.chart > div{
+		background: #090;
+		
+		border-bottom: 1px solid #0A0;
+		color: #0D0;
+	}
+</style>
+<body>
+<script>
+function makechart(entries){
+	var data = createData(entries);
+
+	var x = d3.scale.linear()
+		.domain([0, d3.max(data)])
+		.range([0,100]);
+
+	var chart = d3.select('.chart');
+	var row = chart.selectAll('div')
+		.data(data)
+	
+	row.enter().append('div')
+		.style('width',function(d){ return x(d) + '%'; })
+		.text(function(d){return d;});
+	
+
+	row.exit().remove();
+
+
+		return chart;
+
+}
+	
+function createData(entries){
+	var resolution = 5;
+	entries = (entries || 20) / resolution;
+
+	var data = [];
+	for(var i = 0; i<entries; i++){
+		data.push(Math.ceil(Math.random()*100));
+	}
+
+	var funny = [data[0]];
+	for(var i =0; i < data.length -1; i++){
+		
+		var next = data[i+1];
+		var step = (next-data[i])/resolution;
+		
+		for(var j=1; j<=resolution; j++){
+			funny.push(data[i] + j*step)
+		}
+		//funny.push(next);
+	}
+	console.log(data,funny);
+	return funny;
+}
+
+function barchart(entries){
+	var data = createData(entries);
+	var width = 800;
+	var height = 300;
+
+	var scale = d3.scale.linear()
+		.domain([0, d3.max(data)])
+		.range([0,height]);
+
+	var color_scale = d3.scale.linear()
+		.domain([d3.min(data), d3.max(data)])
+		.range([255,0]);
+
+	 chart = d3.select('.charts').append('svg').attr({width : width, height : height});
+	 column = chart.selectAll('g').data(data);
+
+	column.enter()
+		.append('rect')
+		.attr({
+			x : function(d,i){ return i * (width/data.length)},
+			y : function(d){ return -scale(d)+height },
+			width: (width/data.length),
+			height: scale,
+			fill: function(d){ return "rgb(50," + Math.floor(color_scale(d)) + ", 255)"}
+		})
+
+		.on('mouseover',function(){
+			d3.select(this)
+				.attr({fill:'orange'});
+		})
+		.on('mouseout',function(){
+			var element = d3.select(this).data()[0];
+			console.log(element);
+			d3.select(this)
+				.transition()
+				.duration(500)
+				.attr({fill:function(){  return "rgb(50," + Math.floor(color_scale(element)) + ", 255)";}})
+		});
+}
+function linechart(entries){
+	var data = createData(entries);
+	var width = 800;
+	var height = 300;
+
+	var scale = d3.scale.linear()
+		.domain([0, d3.max(data)])
+		.range([0,height]);
+
+	 chart = d3.select('.charts').append('svg').attr({width : width, height : height});
+	 column = chart.selectAll('rect').data(data);
+
+	column.enter()
+		.append('rect')
+		.attr({
+			x : function(d,i){ return i * (width/data.length)},
+			y : function(d){ return -scale(d)+height },
+			width: (width/data.length),
+			height: scale,
+			fill: '#0d0'
+		});
+}
+
+window.onload = function(){ barchart(100) };
+
+</script>
+<div class="chart">
+	hi
+</div>
+<div class="charts"></div>
+</body>
+</html>

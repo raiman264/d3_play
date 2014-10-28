@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>D3 start</title>
+</head>
+<script src="d3.v3.js" charset="utf-8"></script>
+<style>
+	
+</style>
+<body>
+<script>
+function forcechart(w, h){
+	var size = {
+		w: w || 1500, 
+		h: h || 300, 
+		radius:30
+	};
+	var dataset = {
+		people:[
+			{ name: '0'},
+			{ name: '1'},
+			{ name: '2'},
+			{ name: '3'},
+			{ name: '4'}
+		],
+		links: [
+			{source: 0, target: 1},
+			{source: 0, target: 2},
+			{source: 0, target: 3},
+			{source: 4, target: 1},
+			{source: 4, target: 2},
+			{source: 4, target: 3},
+			{source: 3, target: 1},
+			{source: 3, target: 2},
+			{source: 1, target: 3}
+		]
+	}
+
+	var force = d3.layout.force()
+						.nodes(dataset.people)
+						.links(dataset.links)
+						.linkDistance([100])
+						.charge([-1000])
+						.size([size.w,size.h])
+						.start();
+
+	var svg = d3.select('#svg').attr({width: size.w, height: size.h});
+	var edges = svg.selectAll('line')
+					.data(dataset.links)
+					.enter()
+					.append('line')
+					.style('stroke','#ccc')
+					.style('stroke-width','1');
+
+	var nodes = svg.selectAll('circle')
+					.data(dataset.people)
+					.enter()
+					.append('circle')
+					.attr('r',size.radius)
+					.style('fill',"#F00")
+					.call(force.drag);
+
+	force.on('tick',function(){
+		edges.attr('x1',function(d){ return d.source.x})
+			 .attr('y1',function(d){ return d.source.y})
+			 .attr('x2',function(d){ return d.target.x})
+			 .attr('y2',function(d){ return d.target.y});
+
+		nodes.attr('cx', function(d){ return d.x})
+			 .attr('cy', function(d){ return d.y});
+	});
+
+
+}
+
+window.onload = function(){ forcechart(window.innerWidth*0.9,window.innerHeight*0.9); };
+
+</script>
+<div class="chart">
+	<svg id="svg" style="background-color: #eee;margin: auto; display: block;"></svg>
+</div>
+</body>
+</html>
