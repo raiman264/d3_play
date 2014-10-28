@@ -4,19 +4,109 @@
 	<title>D3 start</title>
 </head>
 <script src="d3.v3.js" charset="utf-8"></script>
+<script src="neon.js"></script>
+<script>
+  // window.fbAsyncInit = function() {
+  //   FB.init({
+  //     appId      : '132919616879985',
+  //     xfbml      : false,
+  //     version    : 'v2.1'
+  //   });
+  // };
+
+  // (function(d, s, id){
+  //    var js, fjs = d.getElementsByTagName(s)[0];
+  //    if (d.getElementById(id)) {return;}
+  //    js = d.createElement(s); js.id = id;
+  //    js.src = "//connect.facebook.net/en_US/sdk.js";
+  //    fjs.parentNode.insertBefore(js, fjs);
+  //  }(document, 'script', 'facebook-jssdk'));
+</script>
 <style>
-	
+	svg{
+		background-color: #eee;margin: auto; display: block;
+	}
 </style>
 <body>
 <script>
-function forcechart(w, h){
-	var size = {
-		w: w || 1500, 
-		h: h || 300, 
-		radius:30
-	};
-	var dataset = {
-		people:[
+UI = {};
+
+Class(UI, 'forces')({
+	prototype: {
+		html: 'svg',
+		canvas: null,
+		width : 0,
+		height: 0,
+		radius: 0,
+		force: null,
+		force_system: {
+			linkDistance : 100,
+			charge : -1000
+		},
+		data: null,
+		init: function(w,h,r){
+			this.width = w || 100;
+			this.height = h || 100;
+			this.radius = r || 10;
+
+			this.html = document.createElementNS("http://www.w3.org/2000/svg",this.html);
+			this.canvas = d3.select(this.html);
+		},
+		start: function(dataset){
+			if(dataset !== undefined){
+				this.data = dataset;
+			}
+			//console.log(this.force_system);
+			this.canvas.attr({'width': this.width, 'height': this.height});
+
+			this.force = d3.layout.force()
+						.nodes(this.data.nodes)
+						.links(this.data.links)
+						.linkDistance([this.force_system.linkDistance])
+						.charge([this.force_system.charge])
+						.size([this.width,this.height])
+						.start();
+
+			
+			this.force_system.edges = this.canvas.selectAll('line')
+										.data(this.data.links)
+										.enter()
+										.append('line')
+										.style('stroke','#ccc')
+										.style('stroke-width','1');
+
+			this.force_system.nodes = this.canvas.selectAll('circle')
+										.data(this.data.nodes)
+										.enter()
+										.append('circle')
+										.attr('r',this.radius)
+										.style('fill',"#F00")
+										.call(this.force.drag);
+
+			var _this = this;
+			this.force.on('tick',function(){ _this.render()});
+		},
+		render: function(){
+			//console.log(this.force_system);
+			this.force_system.edges
+					.attr('x1',function(d){ return d.source.x})
+					.attr('y1',function(d){ return d.source.y})
+					.attr('x2',function(d){ return d.target.x})
+					.attr('y2',function(d){ return d.target.y});
+
+			this.force_system.nodes
+					.attr('cx', function(d){ return d.x})
+					.attr('cy', function(d){ return d.y});
+		}
+	}
+});
+
+
+window.onload = function(){ 
+	chart = new UI.forces(window.innerWidth*0.9,window.innerHeight*0.9);
+	console.log(chart);
+	chart.start({
+		nodes:[
 			{ name: '0'},
 			{ name: '1'},
 			{ name: '2'},
@@ -34,50 +124,17 @@ function forcechart(w, h){
 			{source: 3, target: 2},
 			{source: 1, target: 3}
 		]
-	}
-
-	var force = d3.layout.force()
-						.nodes(dataset.people)
-						.links(dataset.links)
-						.linkDistance([100])
-						.charge([-1000])
-						.size([size.w,size.h])
-						.start();
-
-	var svg = d3.select('#svg').attr({width: size.w, height: size.h});
-	var edges = svg.selectAll('line')
-					.data(dataset.links)
-					.enter()
-					.append('line')
-					.style('stroke','#ccc')
-					.style('stroke-width','1');
-
-	var nodes = svg.selectAll('circle')
-					.data(dataset.people)
-					.enter()
-					.append('circle')
-					.attr('r',size.radius)
-					.style('fill',"#F00")
-					.call(force.drag);
-
-	force.on('tick',function(){
-		edges.attr('x1',function(d){ return d.source.x})
-			 .attr('y1',function(d){ return d.source.y})
-			 .attr('x2',function(d){ return d.target.x})
-			 .attr('y2',function(d){ return d.target.y});
-
-		nodes.attr('cx', function(d){ return d.x})
-			 .attr('cy', function(d){ return d.y});
 	});
-
-
-}
-
-window.onload = function(){ forcechart(window.innerWidth*0.9,window.innerHeight*0.9); };
+	document.getElementsByTagName('body')[0].appendChild(chart.html);
+	//forcechart(window.innerWidth*0.9,window.innerHeight*0.9); 
+};
 
 </script>
+<!--
 <div class="chart">
-	<svg id="svg" style="background-color: #eee;margin: auto; display: block;"></svg>
+	<svg id="svg" style=""></svg>
 </div>
+-->
+
 </body>
 </html>
